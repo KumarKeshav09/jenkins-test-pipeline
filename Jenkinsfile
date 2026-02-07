@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters{
-        choices (
+        choice (
             name: 'MODE',
             choices: ['headless', 'headed'],
             description: 'Run Playwright in headless or headed mode'
