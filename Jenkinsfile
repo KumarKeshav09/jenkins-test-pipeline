@@ -28,15 +28,15 @@ pipeline {
             }
         }
 
+        stage('Install Playwright Browsers') {
+            steps {
+                sh 'npx playwright install'
+            }
+        }
+
         stage('Run Playwright Tests') {
             steps {
-                script {
-                    if (params.MODE == 'headed') {
-                        sh 'npx playwright test --headed'
-                    } else {
-                        sh 'npx playwright test'
-                    }
-                }
+                sh 'npx playwright test'
             }
         }
     }
