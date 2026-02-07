@@ -5,50 +5,54 @@ pipeline {
         PATH = "/opt/homebrew/bin:${env.PATH}"
     }
 
-    parameters{
-        choice (
+    parameters {
+        choice(
             name: 'MODE',
             choices: ['headless', 'headed'],
-            description: 'Run Playwright in headless or headed mode'
+            description: 'Playwright run mode'
         )
     }
 
     stages {
-        stage('Checkout Info') {
+        stage('Check Node') {
             steps {
-                echo "Repo is checked out"
-                sh 'pwd'
-                sh 'ls'
+                sh 'node -v'
+                sh 'npm -v'
+                sh 'npx -v'
             }
         }
 
-        stage('Groovy Demo') {
+        stage('Install Dependencies') {
             steps {
-                script {
-                    def language = 'Groovy'
-                    echo "Learning ${language} with Jenkins"
-                }
+                sh 'npm install'
             }
         }
 
-        stage('Show Mode') {
-            steps {
-                echo "Selected mode: ${params.MODE}"
-            }
-        }
-
-        stage('Run Playwright') {
+        stage('Run Playwright Tests') {
             steps {
                 script {
                     if (params.MODE == 'headed') {
-                        echo 'Running in HEADED mode'
                         sh 'npx playwright test --headed'
                     } else {
-                        echo 'Running in HEADLESS mode'
                         sh 'npx playwright test'
                     }
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Publishing Playwright HTML report'
+
+            publishHTML(target: [
+                reportDir: 'playwright-report',
+                reportFiles: 'index.html',
+                reportName: 'Playwright Test Report',
+                keepAll: true,
+                alwaysLinkToLastBuild: true,
+                allowMissing: true
+            ])
         }
     }
 }
