@@ -1,72 +1,50 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    PATH = "/opt/homebrew/bin:${env.PATH}"
-    CI = "true"
-  }
-
-  parameters {
-    choice(
-      name: 'MODE',
-      choices: ['headless', 'headed'],
-      description: 'Playwright run mode'
-    )
-  }
-
-  stages {
-
-    stage('Install Dependencies') {
-      steps {
-        sh 'npm install'
-      }
+    environment {
+        PATH = "/opt/homebrew/bin:${env.PATH}"
     }
 
-    stage('Install Playwright Browsers') {
-      steps {
-        sh 'npx playwright install chromium'
-      }
-    }
+    stages {
 
-    stage('Run Playwright Tests') {
-      steps {
-        script {
-          def cmd = "npx playwright test --reporter=html"
-
-          if (params.MODE == 'headed') {
-            cmd += " --headed"
-            echo "🖥 Running in HEADED mode"
-          } else {
-            echo "⚡ Running in HEADLESS mode"
-          }
-
-          sh cmd
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm ci'
+            }
         }
-      }
+
+        stage('Install Playwright Browsers') {
+            steps {
+                sh 'npx playwright install --with-deps'
+            }
+        }
+
+        stage('Run Playwright Tests') {
+            steps {
+                sh 'npx playwright test --reporter=html'
+            }
+        }
+
+        stage('Verify HTML Report') {
+            steps {
+                sh '''
+                  ls -la
+                  ls -la playwright-report || true
+                '''
+            }
+        }
     }
 
-    stage('Verify Report') {
-      steps {
-        sh '''
-          echo "Checking playwright-report directory"
-          ls -la playwright-report || true
-        '''
-      }
+    post {
+        always {
+            publishHTML(target: [
+                reportDir: 'playwright-report',
+                reportFiles: 'index.html',
+                reportName: 'Playwright HTML Report',
+                keepAll: true,
+                alwaysLinkToLastBuild: true,
+                allowMissing: false
+            ])
+        }
     }
-  }
-
-  post {
-    always {
-      echo '📊 Publishing Playwright HTML report'
-
-      publishHTML([
-        allowMissing: false,
-        alwaysLinkToLastBuild: true,
-        keepAll: true,
-        reportDir: 'playwright-report',
-        reportFiles: 'index.html',
-        reportName: 'Playwright HTML Report'
-      ])
-    }
-  }
 }
