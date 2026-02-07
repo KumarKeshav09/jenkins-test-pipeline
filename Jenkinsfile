@@ -16,16 +16,6 @@ pipeline {
 
   stages {
 
-    stage('Check Node') {
-      steps {
-        sh '''
-          node -v
-          npm -v
-          npx -v
-        '''
-      }
-    }
-
     stage('Install Dependencies') {
       steps {
         sh 'npm install'
@@ -41,17 +31,26 @@ pipeline {
     stage('Run Playwright Tests') {
       steps {
         script {
-          def runCmd = "npx playwright test"
+          def cmd = "npx playwright test --reporter=html"
 
           if (params.MODE == 'headed') {
-            runCmd += " --headed"
-            echo "🚀 Running in HEADED mode"
+            cmd += " --headed"
+            echo "🖥 Running in HEADED mode"
           } else {
             echo "⚡ Running in HEADLESS mode"
           }
 
-          sh runCmd
+          sh cmd
         }
+      }
+    }
+
+    stage('Verify Report') {
+      steps {
+        sh '''
+          echo "Checking playwright-report directory"
+          ls -la playwright-report || true
+        '''
       }
     }
   }
@@ -61,12 +60,12 @@ pipeline {
       echo '📊 Publishing Playwright HTML report'
 
       publishHTML([
-        allowMissing: true,
+        allowMissing: false,
         alwaysLinkToLastBuild: true,
         keepAll: true,
         reportDir: 'playwright-report',
         reportFiles: 'index.html',
-        reportName: 'Playwright Test Report'
+        reportName: 'Playwright HTML Report'
       ])
     }
   }
