@@ -13,7 +13,6 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   use: {
-    headless: true,
 
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
